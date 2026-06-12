@@ -561,9 +561,25 @@ showData();
 
 ---
 
-### 24. What is the Event Loop?
+## 24. What is the Event Loop?
 
-JavaScript runs on a single thread, meaning it can do one thing at a time. The **Event Loop** is the mechanism that allows JavaScript to handle asynchronous tasks (like `setTimeout`, API calls) without freezing the program.
+JavaScript is **single-threaded**, meaning it executes only **one task at a time** using a **Call Stack**.
+
+The Event Loop allows JavaScript to perform asynchronous operations (`setTimeout`, `Promise`, API calls, etc.) without blocking the main thread.
+
+### Core Components
+
+```text
+Call Stack      → Executes code
+Web APIs        → Handles async operations
+Microtask Queue → Promise callbacks
+Callback Queue  → setTimeout, setInterval callbacks
+Event Loop      → Moves tasks to Call Stack
+```
+
+---
+
+### Example 1: Basic Event Loop
 
 ```javascript
 console.log("1");
@@ -573,16 +589,314 @@ setTimeout(() => {
 }, 0);
 
 console.log("3");
-
-// Output:
-// 1
-// 3
-// 2
 ```
 
-Even though the `setTimeout` has a delay of 0, "2" prints last. This is because `setTimeout` is sent to a queue and only runs after all normal code finishes. The event loop manages this queue.
+<details>
+<summary><strong>👀 View Output</strong></summary>
+
+```text
+1
+3
+2
+```
+
+</details>
+
+### Step-by-Step Execution
+
+#### Step 1
+
+```javascript
+console.log("1");
+```
+
+Call Stack executes immediately.
+
+```text
+Output: 1
+```
 
 ---
+
+#### Step 2
+
+```javascript
+setTimeout(() => {
+  console.log("2");
+}, 0);
+```
+
+- Callback is sent to Web APIs.
+- Timer starts (0ms).
+- Main code continues.
+
+```text
+Output: 1
+```
+
+---
+
+#### Step 3
+
+```javascript
+console.log("3");
+```
+
+Runs immediately.
+
+```text
+Output:
+1
+3
+```
+
+---
+
+#### Step 4
+
+Main code finishes.
+
+```text
+Call Stack = Empty
+```
+
+---
+
+#### Step 5
+
+Timer completed.
+
+Callback moves to:
+
+```text
+Callback Queue
+```
+
+---
+
+#### Step 6
+
+Event Loop checks:
+
+```text
+Is Call Stack Empty?
+```
+
+Yes ✅
+
+Moves callback from Queue to Call Stack.
+
+```javascript
+console.log("2");
+```
+
+Runs.
+
+```text
+Output:
+1
+3
+2
+```
+
+---
+
+### Visual Flow
+
+```text
+console.log("1")
+      ↓
+Call Stack
+      ↓
+Output: 1
+
+setTimeout(...)
+      ↓
+Web APIs
+
+console.log("3")
+      ↓
+Output: 3
+
+Main Code Finished
+      ↓
+Event Loop
+      ↓
+Callback Queue
+      ↓
+Call Stack
+      ↓
+Output: 2
+```
+
+---
+
+## Example 2: Promise vs setTimeout (Most Asked)
+
+```javascript
+console.log("1");
+
+setTimeout(() => console.log("2"), 0);
+
+Promise.resolve().then(() => {
+  console.log("3");
+});
+
+console.log("4");
+```
+
+<details>
+<summary><strong>👀 View Output</strong></summary>
+
+```text
+1
+4
+3
+2
+```
+
+</details>
+
+### Why?
+
+#### Synchronous Code
+
+```javascript
+console.log("1");
+console.log("4");
+```
+
+Runs first.
+
+```text
+Output:
+1
+4
+```
+
+---
+
+#### Promise Callback
+
+```javascript
+Promise.resolve().then(...)
+```
+
+Moves to:
+
+```text
+Microtask Queue
+```
+
+---
+
+#### setTimeout Callback
+
+```javascript
+setTimeout(...)
+```
+
+Moves to:
+
+```text
+Callback Queue (Macrotask Queue)
+```
+
+---
+
+#### Event Loop Priority
+
+JavaScript always executes:
+
+```text
+1. Call Stack
+2. Microtask Queue
+3. Callback Queue
+```
+
+Therefore:
+
+```text
+1
+4
+3
+2
+```
+
+---
+
+## Visual Flow
+
+```text
+┌───────────────────┐
+│   Call Stack      │
+└─────────┬─────────┘
+          │
+          ▼
+┌───────────────────┐
+│     Web APIs      │
+└─────────┬─────────┘
+          │
+   ┌──────┴──────┐
+   ▼             ▼
+Microtask     Callback
+ Queue          Queue
+(Promise)    (setTimeout)
+   │             │
+   └──────┬──────┘
+          ▼
+     Event Loop
+          ▼
+     Call Stack
+```
+
+---
+
+## 🔑 Golden Rule
+
+```text
+Synchronous Code
+        ↓
+Microtasks (Promise, queueMicrotask)
+        ↓
+Macrotasks (setTimeout, setInterval)
+```
+
+### Interview Shortcut
+
+If you see:
+
+```javascript
+console.log(...)
+Promise.then(...)
+setTimeout(...)
+```
+
+Think:
+
+```text
+Normal Code First
+→ Promise
+→ setTimeout
+```
+
+---
+
+## 🎯 Most Important Interview Takeaway
+
+```text
+Call Stack
+    ↓
+Web APIs
+    ↓
+Microtask Queue (Highest Priority)
+    ↓
+Callback Queue
+    ↓
+Event Loop
+```
+
+If you understand this flow, you can solve most JavaScript Event Loop output-based interview questions.
 
 ### 25. Synchronous vs Asynchronous code
 
